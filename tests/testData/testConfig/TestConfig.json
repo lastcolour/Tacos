@@ -1,0 +1,36 @@
+{
+    "Project":"Build Test Project",
+    "InputVariables":{
+        "buildType":"Debug",
+        "platform":"Windows"
+    },
+    "Steps":[
+        {
+            "type":"CreateVariables",
+            "data":{
+                "project_in_dir":"${current_file}/../testProject",
+                "project_out_dir":"${current_file}/../_build/${plaform}/${buildType}"
+            }
+        },
+        {
+            "type":"SwitchCaseCreateVariable",
+            "data":{
+                "variale":"${plaform}",
+                "cases":{
+                    "Windows":{},
+                    "Linux":{},
+                    "Android":{}
+                }
+            }
+        },
+        {
+            "type":"CmakeGenerate",
+            "data":{
+                "run_dir":"${project_in_dir}",
+                "out_dir":"${project_out_dir}",
+                "build_type":"${buildType}",
+                "def":"${cmake_def}"
+            }
+        }
+    ]
+}
