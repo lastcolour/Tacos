@@ -1,3 +1,0 @@
-C:/Code/GIT/Tacos/tests/testData/_build/Windows/Debug/_cmake/Debug/CMakeFiles/TestProject.dir
-C:/Code/GIT/Tacos/tests/testData/_build/Windows/Debug/_cmake/Debug/CMakeFiles/ALL_BUILD.dir
-C:/Code/GIT/Tacos/tests/testData/_build/Windows/Debug/_cmake/Debug/CMakeFiles/ZERO_CHECK.dir
