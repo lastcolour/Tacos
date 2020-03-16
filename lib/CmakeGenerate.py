@@ -14,6 +14,7 @@ class CmakeGenerate(Step):
         self._arch = None
         self._cmake_out_dir = None
         self._bin_out_dir = None
+        self._defs = []
 
     def serialize(self, node):
         self._out_dir = node["out_dir"]
@@ -23,9 +24,8 @@ class CmakeGenerate(Step):
             self._generator = node["generator"]
         if "arch" in node:
             self._arch = node["arch"]
-        return True
-
-    def init(self):
+        if "defs" in node:
+            self._defs = node["defs"]
         self._cmake_out_dir = "{0}/_cmake/{1}".format(self._out_dir, self._build_type)
         self._bin_out_dir = self._out_dir
         return True
@@ -85,6 +85,8 @@ class CmakeGenerate(Step):
             cmakeArgs.append('-G"{0}"'.format(self._generator))
             if self._arch is not None:
                 cmakeArgs.append('-A{0}'.format(self._arch))
+        defs = self._getCmakeDefs()
+        cmakeArgs.extend(defs)
         return cmakeArgs
 
     def _generateCmakeProject(self):
@@ -130,3 +132,9 @@ class CmakeGenerate(Step):
         else:
             pass
         return True
+
+    def _getCmakeDefs(self):
+        cmakeDefs = []
+        for item in self._defs:
+            cmakeDefs.append("-D{0}={1}".format(item, self._defs[item]))
+        return cmakeDefs

@@ -1,3 +1,7 @@
 import logging
 
-Log = logging.Logger("main", logging.DEBUG)
+def _createLogger():
+    logging.basicConfig(level=logging.DEBUG, format="[%(levelname)] %(message)s")
+    return logging.Logger("main")
+
+Log = _createLogger()

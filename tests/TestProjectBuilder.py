@@ -21,9 +21,6 @@ class TestSerializeData(Step):
         TestSerializeData.JSON_NODE = jsonNode
         return True
 
-    def init(self):
-        return True
-
     def run(self):
         return True
 
@@ -95,11 +92,12 @@ class TestProjectBuilder(unittest.TestCase):
         self.assertIsNotNone(project)
 
     def test_context_format_step_data(self):
-        self._writeContentToTempFile('{"Project":"TestProject", "Steps":[{"type":"TestSerializeData","data":{"test_var":"${currentFile}"}}]}')
+        self._writeContentToTempFile('{"Project":"TestProject", "Steps":[{"type":"TestSerializeData","data":{"test_var":"${currentDir}"}}]}')
         builder = ProjectBuilder()
         builder.addStepClass(TestSerializeData)
         project = builder.build(self._getPathToTempFile())
         self.assertIsNotNone(project)
+        project.run()
 
         self.assertEqual(len(TestSerializeData.JSON_NODE), 1)
         self.assertIn("test_var", TestSerializeData.JSON_NODE)

@@ -4,6 +4,7 @@ from .Logger import Log
 from .CmakeGenerate import CmakeGenerate
 from .CreateVariables import CreateVariables
 from .CreateVariables import SwtichCaseCreateVariable
+from .ImportProject import ImportProject
 
 import json
 import sys
@@ -14,6 +15,7 @@ class ProjectBuilder:
         self.addStepClass(CmakeGenerate)
         self.addStepClass(CreateVariables)
         self.addStepClass(SwtichCaseCreateVariable)
+        self.addStepClass(ImportProject)
 
     def addStepClass(self, stepClass):
         clName = stepClass.__name__
@@ -42,6 +44,16 @@ class ProjectBuilder:
         Log.info("Loaded project from: {0}".format(projectFile))
         return project
 
+    def _createInputVariables(self, project, jsonNode):
+        if "InputVariables" not in jsonNode:
+            Log.error("Can't create input variable for project")
+            return False
+        inputVars = jsonNode["InputVariables"]
+        ctx = project.getContext()
+        for varName in inputVars.keys():
+            ctx.addVariable(varName, inputVars[varName])
+        return True
+
     def _createNode(self, stepName):
         if stepName not in self._stepImpl:
             return None
@@ -57,6 +69,8 @@ class ProjectBuilder:
             return None
         project = Project(projectName)
         project.setProjectFile(projectFile)
+        if not self._createInputVariables(project, jsonNode):
+            return None
         return project
 
     def _createStep(self, jsonNode, projectContext):
@@ -69,19 +83,8 @@ class ProjectBuilder:
             return None
         node = self._createNode(stepType)
         if node is None:
-            Log.error("Can't create step of type: {0}".format(stepType))
-            return None
-        stepNode = projectContext.createStepNode(jsonNode["data"])
-        if stepNode is None:
-            Log.error("Can't create step node")
-            return None
-        if not node.serialize(stepNode):
-            Log.error("Can't serialize step: {0}".format(stepType))
-            return None
-        if not node.init():
-            Log.error("Can't init step: {0}".format(stepType))
-            return None
-        return node
+            Log.error("Can't find implementation for step node type: {0}".format(stepType))
+        return node, jsonNode["data"]
 
     def _buildTree(self, jsonNode, projectFile):
         project = self._createProject(jsonNode, projectFile)
@@ -95,9 +98,9 @@ class ProjectBuilder:
             return None
         ctx = project.getContext()
         for stepNode in jsonNode["Steps"]:
-            step = self._createStep(stepNode, ctx)
-            if step is None:
+            stepNode, stepData = self._createStep(stepNode, ctx)
+            if stepNode is None or stepData is None:
                 return None
             else:
-                project.addNode(step)
+                project.addNode(stepNode, stepData)
         return project

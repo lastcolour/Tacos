@@ -28,7 +28,6 @@ class TestCreateVariable(unittest.TestCase):
         switchCreate = SwtichCaseCreateVariable()
         switchCreate.setProject(project)
 
-        self.assertTrue(switchCreate.init())
         self.assertTrue(switchCreate.serialize(data))
         self.assertTrue(switchCreate.run())
 

@@ -58,6 +58,8 @@ class Context:
         self._vars = {}
 
     def addVariable(self, varName, varValue):
+        if varValue is None:
+            raise RuntimeError("Can't create varialbe with none value <'{0}':None>".format(varName))
         if type(varValue) is not str:
             raise RuntimeError("Can't add variable: <'{0}' : '{1}'> of non 'str' type: {2}".format(varName, varValue, type(varName).__str__()))
         if varName in self._vars:
@@ -82,8 +84,7 @@ class Context:
             if fmtFlag:
                 fmtVarName = token[0]
                 if fmtVarName not in self._vars:
-                    Log.error("Can't find variable '{0}' to format string: '{1}'".format(fmtVarName, varStr))
-                    return None
+                    raise RuntimeError("Can't find variable '{0}' to format string: '{1}'".format(fmtVarName, varStr))
                 else:
                     res.append(self._vars[fmtVarName])
             else:
@@ -107,3 +108,8 @@ class Context:
     def createStepNode(self, jsonNode):
         self._recursiveFormat(jsonNode)
         return jsonNode
+
+    def setParentContext(self, parentContext):
+        for varName in parentContext._vars.keys():
+            if varName not in self._vars:
+                self._vars[varName] = parentContext._vars[varName]

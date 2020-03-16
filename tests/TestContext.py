@@ -7,15 +7,15 @@ class TestContext(unittest.TestCase):
 
     def test_add_variable(self):
         ctx = Context()
-        ctx.addVariable("currentFile", "1")
-        res = ctx.getFormated("a/${currentFile}/b")
+        ctx.addVariable("currentDir", "1")
+        res = ctx.getFormated("a/${currentDir}/b")
         self.assertEqual(res, "a/1/b")
 
     def test_readd_variable(self):
         ctx = Context()
-        ctx.addVariable("currentFile", "1")
-        ctx.addVariable("currentFile", "2")
-        res = ctx.getFormated("${currentFile}")
+        ctx.addVariable("currentDir", "1")
+        ctx.addVariable("currentDir", "2")
+        res = ctx.getFormated("${currentDir}")
         self.assertEqual(res, "2")
 
     def test_add_two_variable(self):
@@ -45,3 +45,13 @@ class TestContext(unittest.TestCase):
         data = {"a":["${a}"]}
         res = ctx.createStepNode(data)
         self.assertEqual(res["a"][0], "a")
+
+    def test_parent_context(self):
+        rootCtx = Context()
+        rootCtx.addVariable("a", "1")
+
+        childCtx = Context()
+        childCtx.addVariable("b", "2")
+
+        childCtx.setParentContext(rootCtx)
+        self.assertEqual(childCtx.getVariable("a"), "1")

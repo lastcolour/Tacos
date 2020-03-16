@@ -1,0 +1,12 @@
+{
+    "Project":"Tests Import Project",
+    "InputVariables":{},
+    "Steps":[
+        {
+            "type":"ImportProject",
+            "data":{
+                "project_file":"${currentDir}/TestConfig.json"
+            }
+        }
+    ]
+}

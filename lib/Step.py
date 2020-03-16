@@ -5,9 +5,6 @@ class Step:
     def serialize(self, node):
         raise NotImplementedError
 
-    def init(self):
-        raise NotImplementedError
-
     def setProject(self, project):
         self._project = project
 

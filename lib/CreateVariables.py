@@ -10,9 +10,6 @@ class CreateVariables(Step):
             self._varsToCreate.append((item, jsonNode[item]))
         return True
 
-    def init(self):
-        return True
-
     def run(self):
         ctx = self._getContext()
         for varPair in self._varsToCreate:
@@ -24,9 +21,6 @@ class SwtichCaseCreateVariable(Step):
         Step.__init__(self)
         self._variable = None
         self._cases = {}
-
-    def init(self):
-        return True
 
     def serialize(self, jsonNode):
         self._variable = jsonNode["variable"]
