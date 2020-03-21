@@ -1,0 +1,13 @@
+{
+    "Project":"TestCopyFile",
+    "InputVariables":{},
+    "Steps": [
+        {
+            "type":"CopyFile",
+            "data":{
+                "from":"${currentDir}/{currentFileName}",
+                "to":"{currentDir}/tmp/{currentFileName}"
+            }
+        }
+    ]
+}

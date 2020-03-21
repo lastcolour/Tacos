@@ -26,7 +26,7 @@ class TestCmakeGenerate(unittest.TestCase):
             "build_type":"Invalid",
             "out_dir":""
         }
-        self.assertTrue(cmakeGen.serialize(data))
+        cmakeGen.serialize(data)
         self.assertFalse(cmakeGen.run())
 
 
@@ -37,7 +37,7 @@ class TestCmakeGenerate(unittest.TestCase):
             "build_type": "Invalid",
             "out_dir":""
         }
-        self.assertTrue(cmakeGen.serialize(data))
+        cmakeGen.serialize(data)
         self.assertFalse(cmakeGen.run())
 
     def test_cmake_invalid_out_dir(self):
@@ -47,7 +47,7 @@ class TestCmakeGenerate(unittest.TestCase):
             "build_type": "Debug",
             "out_dir":""
         }
-        self.assertTrue(cmakeGen.serialize(data))
+        cmakeGen.serialize(data)
         self.assertFalse(cmakeGen.run())
 
     def test_cmake_build_test_project(self):
@@ -57,7 +57,7 @@ class TestCmakeGenerate(unittest.TestCase):
             "build_type": "Debug",
             "out_dir":self._getOutDir()
         }
-        self.assertTrue(cmakeGen.serialize(data))
+        cmakeGen.serialize(data)
         self.assertTrue(cmakeGen.run())
 
         outDir = self._getOutDir()
@@ -71,13 +71,25 @@ class TestCmakeGenerate(unittest.TestCase):
             "build_type": "Debug",
             "out_dir":self._getOutDir(),
             "defs":{
-                "PRINT_MESSAGE":"Hello From Tests!"
+                "General": {
+                    "PRINT_MESSAGE":"Hello From Tests!"
+                }
             }
         }
-        self.assertTrue(cmakeGen.serialize(data))
+        cmakeGen.serialize(data)
         self.assertTrue(cmakeGen.run())
 
-        res = subprocess.run(args=["TestProject.exe"], cwd=self._getOutDir(), capture_output=True)
+        binOutDir = "{0}/{1}".format(self._getOutDir(), data["build_type"])
+        binOutDir = binOutDir.replace('\\', '/')
+
+        exePath = "{0}/TestProject.exe".format(binOutDir)
+        self.assertTrue(os.path.exists(exePath))
+
+        res = subprocess.run(args=[exePath], cwd=binOutDir, capture_output=True)
         self.assertEqual(res.returncode, 0)
-        self.assertEqual(res.stderr, "")
-        self.assertEqual(res.stdout, data["defs"]["PRINT_MESSAGE"])
+
+        stderr = str(res.stderr, 'ascii').strip()
+        self.assertEqual(stderr, '')
+
+        stdout = str(res.stdout, 'ascii').strip()
+        self.assertEqual(stdout, data["defs"]["General"]["PRINT_MESSAGE"])

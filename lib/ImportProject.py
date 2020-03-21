@@ -7,13 +7,12 @@ class ImportProject(Step):
 
     def serialize(self, jsonData):
         self._projectFile = jsonData["project_file"]
-        return True
 
     def run(self):
         from .ProjectBuilder import ProjectBuilder
         builder = ProjectBuilder()
-        project = builder.build(self._projectFile)
+        project = builder.build(self._projectFile, None)
         if not project:
             return False
-        project.setParentContext(self._getContext())
+        project.setParent(self._getProject())
         return project.run()

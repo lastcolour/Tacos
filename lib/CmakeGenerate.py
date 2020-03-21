@@ -26,9 +26,8 @@ class CmakeGenerate(Step):
             self._arch = node["arch"]
         if "defs" in node:
             self._defs = node["defs"]
-        self._cmake_out_dir = "{0}/_cmake/{1}".format(self._out_dir, self._build_type)
-        self._bin_out_dir = self._out_dir
-        return True
+        self._cmake_out_dir = self._fixPath("{0}/_cmake/{1}".format(self._out_dir, self._build_type))
+        self._bin_out_dir = self._fixPath(self._out_dir)
 
     def run(self):
         if not self._checkBuildType():
@@ -60,6 +59,8 @@ class CmakeGenerate(Step):
 
     def _runCmakeBuild(self):
         try:
+            runArgs = ["cmake", "--build", "."]
+            Log.info("Start process: {0}".format(" ".join(runArgs)))
             ret = subprocess.run(["cmake", "--build", "."], cwd="{0}".format(self._cmake_out_dir))
             ret.check_returncode()
         except Exception as ex:
@@ -80,7 +81,7 @@ class CmakeGenerate(Step):
             '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir)
         ]
         if self._generator is None:
-            Log.warning("Cmake will use default platform code genrator")
+            Log.debug("Cmake will use default platform code genrator")
         else:
             cmakeArgs.append('-G"{0}"'.format(self._generator))
             if self._arch is not None:
@@ -104,7 +105,7 @@ class CmakeGenerate(Step):
 
     def _checkCmakeExists(self):
         try:
-            res = subprocess.run(args=["cmake", "--version"])
+            res = subprocess.run(args=["cmake", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             res.check_returncode()
         except Exception as ex:
             Log.error("Can't find cmake bin: {0}".format(ex.__str__()))
@@ -135,6 +136,15 @@ class CmakeGenerate(Step):
 
     def _getCmakeDefs(self):
         cmakeDefs = []
-        for item in self._defs:
-            cmakeDefs.append("-D{0}={1}".format(item, self._defs[item]))
+        if "General" in self._defs:
+            for item in self._defs["General"]:
+                cmakeDefs.append("-D{0}={1}".format(item, self._defs["General"][item]))
+        if self._build_type in self._defs:
+            for item in self._defs[self._build_type]:
+                cmakeDefs.append("-D{0}={1}".format(item, self._defs[self._build_type][item]))
         return cmakeDefs
+
+    def _fixPath(self, path):
+        path = os.path.abspath(path)
+        path = path.replace("\\", "/")
+        return path

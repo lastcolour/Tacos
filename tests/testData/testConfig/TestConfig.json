@@ -18,7 +18,7 @@
                 "run_dir":"${project_in_dir}",
                 "out_dir":"${project_out_dir}",
                 "build_type":"${buildType}",
-                "def":{}
+                "defs":{}
             }
         }
     ]

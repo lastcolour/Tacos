@@ -10,3 +10,9 @@ class Step:
 
     def _getContext(self):
         return self._project.getContext()
+
+    def _getProject(self):
+        return self._project
+
+    def needUseSoftCtxFormat(self):
+        return False

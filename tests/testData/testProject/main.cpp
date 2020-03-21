@@ -1,12 +1,10 @@
-#ifdef PRINT_MESSAGE
-  #define PRINT_MESSAGE_CONTENT #PRINT_MESSAGE
-#else
-  #define PRINT_MESSAGE_CONTENT ""
+#ifndef PRINT_MESSAGE
+  #define PRINT_MESSAGE ""
 #endif 
 
 #include <iostream>
 
 int main() {
-    std::cout << PRINT_MESSAGE_CONTENT << std::endl;
+    std::cout << PRINT_MESSAGE << std::endl;
     return 0;
 }

@@ -5,9 +5,12 @@ from .CmakeGenerate import CmakeGenerate
 from .CreateVariables import CreateVariables
 from .CreateVariables import SwtichCaseCreateVariable
 from .ImportProject import ImportProject
+from .CopyFile import CopyFile
 
 import json
 import sys
+import os
+from collections import OrderedDict
 
 class ProjectBuilder:
     def __init__(self):
@@ -16,6 +19,7 @@ class ProjectBuilder:
         self.addStepClass(CreateVariables)
         self.addStepClass(SwtichCaseCreateVariable)
         self.addStepClass(ImportProject)
+        self.addStepClass(CopyFile)
 
     def addStepClass(self, stepClass):
         clName = stepClass.__name__
@@ -24,24 +28,32 @@ class ProjectBuilder:
             raise RuntimeError(msg)
         self._stepImpl[clName] = stepClass
 
-    def build(self, projectFile):
+    def build(self, projectFile, inputVariables):
         if len(projectFile) == 0:
             Log.error("Emtpy name of project file")
             return None
+        if not os.path.isabs(projectFile):
+            projectFile = "{0}/{1}".format(os.getcwd(), projectFile)
+        projectFile = projectFile.replace("\\", "/")
+        if not os.path.exists(projectFile):
+            Log.error("Can't find specified project file: {0}".format(projectFile))
+            return None
+        Log.info("Load project from: {0}".format(projectFile))
         node = None
         with open(projectFile, 'r') as fin:
             try:
-                node = json.load(fin)
+                node = json.load(fin, object_pairs_hook=OrderedDict)
             except Exception as ex:
-                Log.error("Can't parse project file {0}. Error: {1}".format(projectFile, repr(ex)))
+                Log.error("Can't parse project file. Error: {0}".format(repr(ex)))
                 return None
             else:
                 pass
-        project = self._buildTree(node, projectFile)
+        return self.buildFromData(node, projectFile)
+
+    def buildFromData(self, data, dataFile):
+        project = self._buildTree(data, dataFile)
         if project is None:
-            Log.error("Can't load project from: {0}".format(projectFile))
-            return None
-        Log.info("Loaded project from: {0}".format(projectFile))
+            Log.error("Can't build project")
         return project
 
     def _createInputVariables(self, project, jsonNode):

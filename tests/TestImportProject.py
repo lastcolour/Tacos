@@ -17,7 +17,7 @@ class TestImportProject(unittest.TestCase):
 
     def test_build_import_project(self):
         builder = ProjectBuilder()
-        project = builder.build(self._getTestProjectPath())
+        project = builder.build(self._getTestProjectPath(), None)
         self.assertIsNotNone(project)
 
         res = project.run()

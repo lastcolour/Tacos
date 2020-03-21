@@ -1,5 +1,7 @@
 from .Logger import Log
 
+from collections import OrderedDict
+
 def _canStartState(currState, startState):
     if startState == 1:
         if currState == 0:
@@ -65,7 +67,7 @@ class Context:
         if varName in self._vars:
             Log.info("Override variable: <'{0}': '{1}' -> '{2}'>".format(varName, self._vars[varName], varValue))
             del self._vars[varName]
-        varValue = self.getFormated(varValue)
+        varValue = self.getFormated(varValue, isSoft=False)
         if varValue is None:
             raise RuntimeError("Can't add variable {0} with format variable: {1}".format(varName, varValue))
         self._vars[varName] = varValue
@@ -76,7 +78,7 @@ class Context:
             return None
         return self._vars[varName]
 
-    def getFormated(self, varStr):
+    def getFormated(self, varStr, isSoft=False):
         res = []
         tokens = _getFmtTokens(varStr)
         for token in tokens:
@@ -84,29 +86,36 @@ class Context:
             if fmtFlag:
                 fmtVarName = token[0]
                 if fmtVarName not in self._vars:
-                    raise RuntimeError("Can't find variable '{0}' to format string: '{1}'".format(fmtVarName, varStr))
+                    if not isSoft:
+                        raise RuntimeError("Can't find variable '{0}' to format string: '{1}'".format(fmtVarName, varStr))
+                    else:
+                        res.append("${{{0}}}".format(fmtVarName))
                 else:
                     res.append(self._vars[fmtVarName])
             else:
                 res.append(token[0])
         return "".join(res)
 
-    def _recursiveFormat(self, val):
+    def _recursiveFormat(self, val, isSoft):
         if type(val) is list:
             for i in range(0, len(val)):
-                val[i] = self._recursiveFormat(val[i])
+                val[i] = self._recursiveFormat(val[i], isSoft)
             return val
-        elif type(val) is dict:
+        elif type(val) in [dict, OrderedDict]:
             for item in val.keys():
-                val[item] = self._recursiveFormat(val[item])
+                val[item] = self._recursiveFormat(val[item], isSoft)
             return val
         elif type(val) is str:
-            return self.getFormated(val)
+            return self.getFormated(val, isSoft)
         else:
             return val
 
     def createStepNode(self, jsonNode):
-        self._recursiveFormat(jsonNode)
+        self._recursiveFormat(jsonNode, isSoft=False)
+        return jsonNode
+
+    def createStepNodeSoft(self, jsonNode):
+        self._recursiveFormat(jsonNode, isSoft=True)
         return jsonNode
 
     def setParentContext(self, parentContext):

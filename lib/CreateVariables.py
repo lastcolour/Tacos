@@ -8,12 +8,14 @@ class CreateVariables(Step):
     def serialize(self, jsonNode):
         for item in jsonNode.keys():
             self._varsToCreate.append((item, jsonNode[item]))
-        return True
 
     def run(self):
         ctx = self._getContext()
         for varPair in self._varsToCreate:
             ctx.addVariable(varPair[0], varPair[1])
+        return True
+
+    def needUseSoftCtxFormat(self):
         return True
 
 class SwtichCaseCreateVariable(Step):
@@ -25,7 +27,6 @@ class SwtichCaseCreateVariable(Step):
     def serialize(self, jsonNode):
         self._variable = jsonNode["variable"]
         self._cases = jsonNode["cases"]
-        return True
     
     def run(self):
         ctx = self._getContext()
@@ -34,4 +35,7 @@ class SwtichCaseCreateVariable(Step):
         varToCreate = self._cases[self._variable]
         for varName in varToCreate:
             ctx.addVariable(varName, varToCreate[varName])
+        return True
+
+    def needUseSoftCtxFormat(self):
         return True

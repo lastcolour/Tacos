@@ -19,7 +19,6 @@ class TestSerializeData(Step):
 
     def serialize(self, jsonNode):
         TestSerializeData.JSON_NODE = jsonNode
-        return True
 
     def run(self):
         return True
@@ -52,53 +51,55 @@ class TestProjectBuilder(unittest.TestCase):
 
     def test_invalid_project(self):
         builder = ProjectBuilder()
-        project = builder.build("")
+        project = builder.build("", None)
         self.assertIsNone(project)
 
     def test_empty_project_file(self):
         self._writeContentToTempFile('')
         builder = ProjectBuilder()
-        project = builder.build(self._getPathToTempFile())
+        project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNone(project)
 
     def test_empty_project_name(self):
         self._writeContentToTempFile('{"Project":"", "Steps":[]}')
         builder = ProjectBuilder()
-        project = builder.build(self._getPathToTempFile())
+        project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNone(project)
 
     def test_empty_steps(self):
         self._writeContentToTempFile('{"Project":"TestProject", "Steps":[]}')
         builder = ProjectBuilder()
-        project = builder.build(self._getPathToTempFile())
+        project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNone(project)
 
     def test_no_steps(self):
         self._writeContentToTempFile('{"Project":"TestProject"}')
         builder = ProjectBuilder()
-        project = builder.build(self._getPathToTempFile())
+        project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNone(project)
 
     def test_invalid_step_node(self):
         self._writeContentToTempFile('{"Project":"TestProject", "Steps":[{"type":"Invalid","data":{}}]}')
         builder = ProjectBuilder()
-        project = builder.build(self._getPathToTempFile())
+        project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNone(project)
 
     def test_normal_project(self):
-        self._writeContentToTempFile('{"Project":"TestProject", "Steps":[{"type":"CreateVariables","data":{"one":1}}]}')
+        self._writeContentToTempFile('{"Project":"TestProject", "InputVariables":{}, "Steps":[{"type":"CreateVariables","data":{"one":1}}]}')
         builder = ProjectBuilder()
-        project = builder.build(self._getPathToTempFile())
+        project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNotNone(project)
 
     def test_context_format_step_data(self):
-        self._writeContentToTempFile('{"Project":"TestProject", "Steps":[{"type":"TestSerializeData","data":{"test_var":"${currentDir}"}}]}')
+        self._writeContentToTempFile('{"Project":"TestProject", "InputVariables":{}, "Steps":[{"type":"TestSerializeData","data":{"test_var":"${currentDir}"}}]}')
         builder = ProjectBuilder()
         builder.addStepClass(TestSerializeData)
-        project = builder.build(self._getPathToTempFile())
+        project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNotNone(project)
         project.run()
 
         self.assertEqual(len(TestSerializeData.JSON_NODE), 1)
         self.assertIn("test_var", TestSerializeData.JSON_NODE)
-        self.assertEqual(TestSerializeData.JSON_NODE["test_var"], self._getPathToTempFile())
+
+        currentDir = pathlib.Path(self._getPathToTempFile()).parent.__str__()
+        self.assertEqual(TestSerializeData.JSON_NODE["test_var"], currentDir)
