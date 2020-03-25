@@ -55,3 +55,24 @@ class TestContext(unittest.TestCase):
 
         childCtx.setParentContext(rootCtx)
         self.assertEqual(childCtx.getVariable("a"), "1")
+
+    def test_invalid_var_format_0(self):
+        ctx = Context()
+        ctx.addVariable("a", "1")
+        try:
+            res = ctx.getFormated("{a}")
+        except:
+            pass
+        else:
+            self.fail("Can't fail if invalid format")
+
+
+    def test_invalid_var_format_1(self):
+        ctx = Context()
+        ctx.addVariable("a", "1")
+        try:
+            res = ctx.getFormated("${a")
+        except:
+            pass
+        else:
+            self.fail("Can't fail if invalid format")

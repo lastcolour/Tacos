@@ -64,6 +64,12 @@ class TestCmakeGenerate(unittest.TestCase):
         items = os.listdir(outDir)
         self.assertGreater(len(items), 0)
 
+        buildLogFile = "{0}/_cmake/{1}/cmake_gen_log.txt".format(self._getOutDir(), "Debug")
+        cmakeLogFile = "{0}/_cmake/{1}/cmake_build_log.txt".format(self._getOutDir(), "Debug")
+
+        self.assertTrue(os.path.exists(buildLogFile))
+        self.assertTrue(os.path.exists(cmakeLogFile))
+
     def test_cmake_add_definition(self):
         cmakeGen = CmakeGenerate()
         data = {

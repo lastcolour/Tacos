@@ -6,7 +6,7 @@ class CreateVariables(Step):
         self._varsToCreate = []
 
     def serialize(self, jsonNode):
-        for item in jsonNode.keys():
+        for item in jsonNode.keys(): 
             self._varsToCreate.append((item, jsonNode[item]))
 
     def run(self):

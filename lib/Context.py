@@ -2,45 +2,75 @@ from .Logger import Log
 
 from collections import OrderedDict
 
+class FmtState:
+    NoState = 0
+    StartDollar = 1
+    StartBracket = 2
+    EndBracket = 3
+
 def _canStartState(currState, startState):
-    if startState == 1:
-        if currState == 0:
+    if startState == FmtState.StartDollar:
+        if currState == FmtState.NoState:
             return True
         else:
             return False
-    elif startState == 2:
-        if currState == 1:
+    elif startState == FmtState.StartBracket:
+        if currState == FmtState.StartDollar:
             return True
         else:
             return False
-    elif startState == 3:
-        if currState == 2:
+    elif startState == FmtState.EndBracket:
+        if currState == FmtState.StartBracket:
             return True
         else:
             return False
     else:
         return False
 
+def _raiseFomatError(fmtStr, pos, errStr):
+    errMsg = "Error! Cannot format: "
+    Log.error("{0}{1}".format(errMsg, fmtStr))
+    Log.error("{0}^ -- {1}".format(
+        " " * (len(errMsg) + pos),
+        errStr
+    ))
+    raise RuntimeError("Invalid format variable")
+
 def _getFmtTokens(s):
     res = []
     startIdx = 0
     endIdx = startIdx
-    currState = 0
+    currState = FmtState.NoState
     for i in range(0, len(s)):
         ch = s[i]
         if ch == '$':
-            if _canStartState(currState, 1):
+            if _canStartState(currState, FmtState.StartDollar):
                 startIdx = i
                 endIdx = startIdx
-                currState = 1
+                currState = FmtState.StartDollar
+            else:
+                _raiseFomatError(s, i, "'$' inside of foramt expression")
         elif ch == '{':
-            if _canStartState(currState, 2):
-                currState = 2
+            if _canStartState(currState, FmtState.StartBracket):
+                currState = FmtState.StartBracket
+            else:
+                _raiseFomatError(s, i, "missing starting '$' before '{ ... '")
         elif ch == '}':
-            if _canStartState(currState, 3):
+            if _canStartState(currState, FmtState.EndBracket):
                 endIdx = i
-                currState = 0
+                currState = FmtState.NoState
                 res.append((startIdx, endIdx))
+            else:
+                _raiseFomatError(s, i, "missing starting '${ ... ' before closing '}'")
+
+    if currState is not FmtState.NoState:
+        if currState is FmtState.StartDollar:
+            _raiseFomatError(s, startIdx, "missing '{ ... ' afrer '$'")
+        elif currState is FmtState.StartBracket:
+            _raiseFomatError(s, startIdx, "missing closing '}' after staring '${ ... '")
+        elif currState is FmtState.EndBracket:
+            raise RuntimeError("Invalid format state")
+
     tokens = []
     prevEnd = 0
     for item in res:

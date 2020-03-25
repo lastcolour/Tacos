@@ -3,6 +3,13 @@ from .Logger import Log
 
 import os
 import subprocess
+import io
+import sys
+import shutil
+
+class _CmakeVerbosity:
+    Silent = 1
+    All = 2
 
 class CmakeGenerate(Step):
     def __init__(self):
@@ -14,12 +21,14 @@ class CmakeGenerate(Step):
         self._arch = None
         self._cmake_out_dir = None
         self._bin_out_dir = None
+        self._verbosity = _CmakeVerbosity.All
         self._defs = []
 
     def serialize(self, node):
         self._out_dir = node["out_dir"]
         self._run_dir = node["run_dir"]
         self._build_type = node["build_type"]
+        self._verbosity = self._getVerboisty(node)
         if "generator" in node:
             self._generator = node["generator"]
         if "arch" in node:
@@ -57,19 +66,6 @@ class CmakeGenerate(Step):
             return False
         return True
 
-    def _runCmakeBuild(self):
-        try:
-            runArgs = ["cmake", "--build", "."]
-            Log.info("Start process: {0}".format(" ".join(runArgs)))
-            ret = subprocess.run(["cmake", "--build", "."], cwd="{0}".format(self._cmake_out_dir))
-            ret.check_returncode()
-        except Exception as ex:
-            Log.error("Can't build cmake solution. Error: {0}".format(ex.__str__()))
-            return False
-        else:
-            pass
-        return True
-
     def _buildCmakeRunArgas(self):
         cmakeArgs = [
             'cmake',
@@ -81,7 +77,7 @@ class CmakeGenerate(Step):
             '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir)
         ]
         if self._generator is None:
-            Log.debug("Cmake will use default platform code genrator")
+            Log.debug("Cmake will use default platform code generator")
         else:
             cmakeArgs.append('-G"{0}"'.format(self._generator))
             if self._arch is not None:
@@ -90,28 +86,32 @@ class CmakeGenerate(Step):
         cmakeArgs.extend(defs)
         return cmakeArgs
 
+    def _runCmakeBuild(self):
+        runArgs = [
+            "cmake",
+            "--build",
+            ".",
+            "--target",
+            "ALL_BUILD",
+            "--config",
+            self._build_type
+        ]
+        saveOutput = True
+        forceSilent = False
+        return self._runCmake(runArgs, self._cmake_out_dir, saveOutput, forceSilent)
+
     def _generateCmakeProject(self):
         runArgs = self._buildCmakeRunArgas()
-        Log.info("Start process: {0}".format(" ".join(runArgs)))
-        try:
-            res = subprocess.run(args=runArgs, cwd=self._run_dir)
-            res.check_returncode()
-        except Exception as ex:
-            Log.error("CFailed to generate cmake solutin. Error: {0}".format(ex.__str__()))
-            return False
-        else:
-            pass
-        return True
+        saveOutput = True
+        forceSilent = False
+        return self._runCmake(runArgs, self._run_dir, saveOutput, forceSilent)
 
     def _checkCmakeExists(self):
-        try:
-            res = subprocess.run(args=["cmake", "--version"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            res.check_returncode()
-        except Exception as ex:
-            Log.error("Can't find cmake bin: {0}".format(ex.__str__()))
-            return False
-        else:
-            return True
+        runArgs = ["cmake", "--version"]
+        runCwd = None
+        saveOutput = False
+        forceSilent = True
+        return self._runCmake(runArgs, runCwd, saveOutput, forceSilent)
 
     def _checkBuildType(self):
         validBuildTypes = ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
@@ -134,6 +134,23 @@ class CmakeGenerate(Step):
             pass
         return True
 
+    def _runCmake(self, runArgs, runCwd, saveOutput, forceSilent):
+        pipeObj = sys.stdout
+        if forceSilent:
+            pipeObj = subprocess.DEVNULL
+        elif saveOutput:
+            pipeObj = self._createPipe("cmake_output.txt")
+        Log.debug("Start process: {0}".format(" ".join(runArgs)))
+        process = subprocess.Popen(runArgs, cwd=runCwd, stdout=pipeObj, stderr=subprocess.STDOUT)
+        retCode = process.wait()
+        if type(pipeObj) is not int:
+            if self._verbosity is not _CmakeVerbosity.Silent or retCode is not 0:
+                self._printRunResults(retCode, pipeObj)
+            pipeObj.close()
+            if not saveOutput:
+                pass
+        return retCode is 0
+
     def _getCmakeDefs(self):
         cmakeDefs = []
         if "General" in self._defs:
@@ -143,6 +160,33 @@ class CmakeGenerate(Step):
             for item in self._defs[self._build_type]:
                 cmakeDefs.append("-D{0}={1}".format(item, self._defs[self._build_type][item]))
         return cmakeDefs
+
+    def _getVerboisty(self, node):
+        if "verbosity" not in node:
+            return _CmakeVerbosity.All
+        verbStr = node["verbosity"]
+        if verbStr == "silent":
+            return _CmakeVerbosity.Silent
+        else:
+            Log.error("Uknown verbosity level: '{0}'".format(verbStr))
+            raise RuntimeError("Can't parse verbosity level")
+        return _CmakeVerbosity.All
+
+    def _createPipe(self, filepath):
+        if not os.path.exists(self._cmake_out_dir):
+            os.makedirs(self._cmake_out_dir)
+        tmpFilePath = "{0}/cmake_log.txt".format(self._cmake_out_dir)
+        return open(tmpFilePath, 'w+')
+
+    def _printRunResults(self, retCode, pipeObj):
+        pipeObj.tell()
+        pipeObj.seek(0)
+        printFunc = Log.info
+        if retCode is not 0:
+            printFunc = Log.warning
+        fileContent = pipeObj.read()
+        for item in fileContent.split('\n'):
+            printFunc("\t{0}".format(item))
 
     def _fixPath(self, path):
         path = os.path.abspath(path)
