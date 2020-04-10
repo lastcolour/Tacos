@@ -10,7 +10,7 @@ class CreateVariables(Step):
             self._varsToCreate.append((item, jsonNode[item]))
 
     def run(self):
-        ctx = self._getContext()
+        ctx = self.context
         for varPair in self._varsToCreate:
             ctx.addVariable(varPair[0], varPair[1])
         return True
@@ -29,7 +29,7 @@ class SwtichCaseCreateVariable(Step):
         self._cases = jsonNode["cases"]
     
     def run(self):
-        ctx = self._getContext()
+        ctx = self.context
         if self._variable not in self._cases:
             return True
         varToCreate = self._cases[self._variable]

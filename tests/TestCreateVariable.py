@@ -41,6 +41,7 @@ class TestCreateVariable(unittest.TestCase):
             "InputVariables":{},
             "Steps":[
                 {
+                    "name":"Create vars",
                     "type":"CreateVariables",
                     "data":{
                         "var1":"a",

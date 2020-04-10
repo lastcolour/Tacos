@@ -3,6 +3,7 @@
     "InputVariables":{},
     "Steps":[
         {
+            "name":"Import Test Project",
             "type":"ImportProject",
             "data":{
                 "project_file":"${currentDir}/TestConfig.json"

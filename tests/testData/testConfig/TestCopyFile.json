@@ -3,6 +3,7 @@
     "InputVariables":{},
     "Steps": [
         {
+            "name":"Copy Files",
             "type":"CopyFile",
             "data":{
                 "from":"${currentDir}/{currentFileName}",

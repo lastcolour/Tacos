@@ -12,6 +12,10 @@ class _CmakeVerbosity:
     All = 2
 
 class CmakeGenerate(Step):
+
+    _GENERATE_LOG_FILE = "cmake_gen_log.txt"
+    _BUILD_LOG_FILE = "cmake_build_log.txt"
+
     def __init__(self):
         Step.__init__(self)
         self._out_dir = None
@@ -96,22 +100,19 @@ class CmakeGenerate(Step):
             "--config",
             self._build_type
         ]
-        saveOutput = True
-        forceSilent = False
-        return self._runCmake(runArgs, self._cmake_out_dir, saveOutput, forceSilent)
+        logFile = CmakeGenerate._BUILD_LOG_FILE
+        return self._runCmake(runArgs, self._cmake_out_dir, logFile)
 
     def _generateCmakeProject(self):
         runArgs = self._buildCmakeRunArgas()
-        saveOutput = True
-        forceSilent = False
-        return self._runCmake(runArgs, self._run_dir, saveOutput, forceSilent)
+        logFile = CmakeGenerate._GENERATE_LOG_FILE
+        return self._runCmake(runArgs, self._run_dir, logFile)
 
     def _checkCmakeExists(self):
         runArgs = ["cmake", "--version"]
         runCwd = None
-        saveOutput = False
-        forceSilent = True
-        return self._runCmake(runArgs, runCwd, saveOutput, forceSilent)
+        logFile = None
+        return self._runCmake(runArgs, runCwd, logFile)
 
     def _checkBuildType(self):
         validBuildTypes = ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
@@ -134,21 +135,19 @@ class CmakeGenerate(Step):
             pass
         return True
 
-    def _runCmake(self, runArgs, runCwd, saveOutput, forceSilent):
-        pipeObj = sys.stdout
-        if forceSilent:
+    def _runCmake(self, runArgs, runCwd, logFile):
+        if logFile is None:
             pipeObj = subprocess.DEVNULL
-        elif saveOutput:
-            pipeObj = self._createPipe("cmake_output.txt")
+        else:
+            pipeObj = self._createPipe(logFile)
         Log.debug("Start process: {0}".format(" ".join(runArgs)))
         process = subprocess.Popen(runArgs, cwd=runCwd, stdout=pipeObj, stderr=subprocess.STDOUT)
         retCode = process.wait()
-        if type(pipeObj) is not int:
+        if pipeObj != subprocess.DEVNULL:
+            Log.debug("Process output saved to: {0}".format(logFile))
             if self._verbosity is not _CmakeVerbosity.Silent or retCode is not 0:
                 self._printRunResults(retCode, pipeObj)
             pipeObj.close()
-            if not saveOutput:
-                pass
         return retCode is 0
 
     def _getCmakeDefs(self):
@@ -175,7 +174,7 @@ class CmakeGenerate(Step):
     def _createPipe(self, filepath):
         if not os.path.exists(self._cmake_out_dir):
             os.makedirs(self._cmake_out_dir)
-        tmpFilePath = "{0}/cmake_log.txt".format(self._cmake_out_dir)
+        tmpFilePath = "{0}/{1}".format(self._cmake_out_dir, filepath)
         return open(tmpFilePath, 'w+')
 
     def _printRunResults(self, retCode, pipeObj):

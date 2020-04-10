@@ -52,10 +52,11 @@ class Project:
         return nodeObj.run()
 
     def _printStepStart(self, nodeObj, nodeIdx):
-        Log.info("{0}[{1}/{2}] Run step: {3}".format(
+        Log.info("{0}[{1}/{2}] Run step: {3} (Impl: {4})".format(
             self._getLogOffset(),
             nodeIdx + 1,
             len(self._nodes),
+            nodeObj.getName(),
             type(nodeObj).__name__))
 
     def _printStepEnd(self, nodeRes, nodeDuration):

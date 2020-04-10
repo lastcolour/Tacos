@@ -66,10 +66,13 @@ class ProjectBuilder:
             ctx.addVariable(varName, inputVars[varName])
         return True
 
-    def _createNode(self, stepName):
-        if stepName not in self._stepImpl:
+    def _createNode(self, stepType, stepName):
+        if stepType not in self._stepImpl:
             return None
-        return self._stepImpl[stepName]()
+        stepCls = self._stepImpl[stepType]
+        stepNode = stepCls()
+        stepNode.setName(stepName)
+        return stepNode
 
     def _createProject(self, jsonNode, projectFile):
         if "Project" not in jsonNode:
@@ -86,6 +89,10 @@ class ProjectBuilder:
         return project
 
     def _createStep(self, jsonNode, projectContext):
+        if "name" not in jsonNode:
+            Log.error("Can't find required project's step 'name' node")
+            return None
+        stepName = jsonNode["name"]
         if "type" not in jsonNode:
             Log.error("Can't find required project's step 'type' node")
             return None
@@ -93,7 +100,7 @@ class ProjectBuilder:
         if "data" not in jsonNode:
             Log.error("Can't find required project's step 'data' node for step: {0}".format(stepType))
             return None
-        node = self._createNode(stepType)
+        node = self._createNode(stepType, stepName)
         if node is None:
             Log.error("Can't find implementation for step node type: {0}".format(stepType))
         return node, jsonNode["data"]
@@ -112,6 +119,7 @@ class ProjectBuilder:
         for stepNode in jsonNode["Steps"]:
             stepNode, stepData = self._createStep(stepNode, ctx)
             if stepNode is None or stepData is None:
+                Log.error("Step: {0}".format(stepNode))
                 return None
             else:
                 project.addNode(stepNode, stepData)

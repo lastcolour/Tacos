@@ -14,5 +14,5 @@ class ImportProject(Step):
         project = builder.build(self._projectFile, None)
         if not project:
             return False
-        project.setParent(self._getProject())
+        project.setParent(self._project)
         return project.run()

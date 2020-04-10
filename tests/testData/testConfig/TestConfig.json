@@ -6,6 +6,7 @@
     },
     "Steps":[
         {
+            "name":"Init Project Variables",
             "type":"CreateVariables",
             "data":{
                 "project_in_dir":"${currentDir}/../testProject",
@@ -13,6 +14,7 @@
             }
         },
         {
+            "name":"Build Project",
             "type":"CmakeGenerate",
             "data":{
                 "run_dir":"${project_in_dir}",

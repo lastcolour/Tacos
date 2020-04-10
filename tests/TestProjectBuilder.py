@@ -85,13 +85,13 @@ class TestProjectBuilder(unittest.TestCase):
         self.assertIsNone(project)
 
     def test_normal_project(self):
-        self._writeContentToTempFile('{"Project":"TestProject", "InputVariables":{}, "Steps":[{"type":"CreateVariables","data":{"one":1}}]}')
+        self._writeContentToTempFile('{"Project":"TestProject", "InputVariables":{}, "Steps":[{"name":"Build", "type":"CreateVariables","data":{"one":1}}]}')
         builder = ProjectBuilder()
         project = builder.build(self._getPathToTempFile(), None)
         self.assertIsNotNone(project)
 
     def test_context_format_step_data(self):
-        self._writeContentToTempFile('{"Project":"TestProject", "InputVariables":{}, "Steps":[{"type":"TestSerializeData","data":{"test_var":"${currentDir}"}}]}')
+        self._writeContentToTempFile('{"Project":"TestProject", "InputVariables":{}, "Steps":[{"name":"Build", "type":"TestSerializeData","data":{"test_var":"${currentDir}"}}]}')
         builder = ProjectBuilder()
         builder.addStepClass(TestSerializeData)
         project = builder.build(self._getPathToTempFile(), None)
