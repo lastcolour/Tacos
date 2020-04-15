@@ -11,22 +11,25 @@ class Project:
         self._nodes = []
         self._parent = None
         self._depth = 0
+        self._nodesRunRes = {}
 
     def addNode(self, nodeObj, nodeData):
         self._nodes.append( (nodeObj, nodeData) )
 
     def run(self):
-        Log.info("Start run project: {0}".format(self._name))
+        Log.info("{0}Start run project: {1}".format(self._getLogOffset(), self._name))
         for idx in range(len(self._nodes)):
             node = self._nodes[idx]
             nodeObj = node[0]
             nodeData = node[1]
             res = self._runNode(nodeObj, nodeData, idx)
-            if res is not True:
-                return False
+            self._nodesRunRes[nodeObj.getName()] = res
         return True
 
     def setProjectFile(self, projectFile):
+        if projectFile is None:
+            Log.debug("Create internal project")
+            return
         parentDirPath = pathlib.Path(projectFile).parent.__str__()
         self._ctx.addVariable("currentDir", parentDirPath)
 
@@ -73,7 +76,30 @@ class Project:
             nodeDuration,
             durationScale))
 
+    def _printSkipNode(self, nodeObj, nodeIdx, depNodeName):
+        Log.info("{0}[{1}/{2}] Skip step: {3} (Impl: {4})".format(
+            self._getLogOffset(),
+            nodeIdx + 1,
+            len(self._nodes),
+            nodeObj.getName(),
+            type(nodeObj).__name__))
+        Log.info("{0}Dependecy failed: {1}".format(
+            self._getLogOffset(),
+            depNodeName))
+
+    def _trySkipNode(self, nodeObj, nodeIdx):
+        for depNodeName in nodeObj.getDependecies():
+            if depNodeName not in self._nodesRunRes:
+                raise RuntimeError("Step depend on node that runs after")
+            depRes = self._nodesRunRes[depNodeName]
+            if depRes is not True:
+                self._printSkipNode(nodeObj, nodeIdx, depNodeName)
+                return True
+        return False
+
     def _runNode(self, nodeObj, nodeData, nodeIdx):
+        if self._trySkipNode(nodeObj, nodeIdx):
+            return None
         self._printStepStart(nodeObj, nodeIdx)
         startT = timeit.default_timer()
         res = self._runNodeImpl(nodeObj, nodeData)

@@ -1,5 +1,5 @@
 from .Step import Step
-from .Logger import Log
+from lib.Logger import Log
 
 import os
 import subprocess

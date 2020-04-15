@@ -1,6 +1,6 @@
 import sys
 
-from .Logger import Log
+from lib.Logger import Log
 
 def _removeQuoted(argStr):
     if len(argStr) < 2:

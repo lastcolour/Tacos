@@ -9,7 +9,7 @@ class ImportProject(Step):
         self._projectFile = jsonData["project_file"]
 
     def run(self):
-        from .ProjectBuilder import ProjectBuilder
+        from lib.ProjectBuilder import ProjectBuilder
         builder = ProjectBuilder()
         project = builder.build(self._projectFile, None)
         if not project:

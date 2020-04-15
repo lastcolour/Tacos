@@ -1,6 +1,6 @@
 import unittest
 
-from lib.CreateVariables import SwtichCaseCreateVariable
+from lib.steps.CreateVariables import SwtichCaseCreateVariable
 from lib.Project import Project
 from lib.ProjectBuilder import ProjectBuilder
 

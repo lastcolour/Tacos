@@ -5,7 +5,7 @@ import subprocess
 
 import TestUtils
 
-from lib.CmakeGenerate import CmakeGenerate
+from lib.steps.CmakeGenerate import CmakeGenerate
 
 class TestCmakeGenerate(unittest.TestCase):
 

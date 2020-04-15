@@ -1,11 +1,12 @@
 from .Project import Project
 from .Logger import Log
 
-from .CmakeGenerate import CmakeGenerate
-from .CreateVariables import CreateVariables
-from .CreateVariables import SwtichCaseCreateVariable
-from .ImportProject import ImportProject
-from .CopyFile import CopyFile
+from .steps.CmakeGenerate import CmakeGenerate
+from .steps.CreateVariables import CreateVariables
+from .steps.CreateVariables import SwtichCaseCreateVariable
+from .steps.ImportProject import ImportProject
+from .steps.CopyFile import CopyFile
+from .steps.IfVariable import IfVariableEqual, IfVariableInSet
 
 import json
 import sys
@@ -15,11 +16,14 @@ from collections import OrderedDict
 class ProjectBuilder:
     def __init__(self):
         self._stepImpl = {}
+        self._stepNames = set()
         self.addStepClass(CmakeGenerate)
         self.addStepClass(CreateVariables)
         self.addStepClass(SwtichCaseCreateVariable)
         self.addStepClass(ImportProject)
         self.addStepClass(CopyFile)
+        self.addStepClass(IfVariableEqual)
+        self.addStepClass(IfVariableInSet)
 
     def addStepClass(self, stepClass):
         clName = stepClass.__name__
@@ -88,11 +92,17 @@ class ProjectBuilder:
             return None
         return project
 
-    def _createStep(self, jsonNode, projectContext):
+    def _createStep(self, jsonNode):
         if "name" not in jsonNode:
             Log.error("Can't find required project's step 'name' node")
             return None
         stepName = jsonNode["name"]
+        if len(stepName) == 0:
+            Log.error("Step name can't be empty")
+            return None
+        if stepName in self._stepNames:
+            Log.error("Found dublicate step name: {0}".format(stepName))
+            return None
         if "type" not in jsonNode:
             Log.error("Can't find required project's step 'type' node")
             return None
@@ -103,6 +113,19 @@ class ProjectBuilder:
         node = self._createNode(stepType, stepName)
         if node is None:
             Log.error("Can't find implementation for step node type: {0}".format(stepType))
+        if "dependOn" in jsonNode:
+            for depStepName in jsonNode["dependOn"]:
+                if depStepName == stepName:
+                    Log.error("Step can't depend on self: {0}".format(stepName))
+                    return None
+                if len(depStepName) == 0:
+                    Log.error("Step dependency name can't be empty")
+                    return None
+                if depStepName not in self._stepNames:
+                    Log.error("Can't find dependecy: '{0}' for step: {1}".format(depStepName, stepName))
+                    return None
+                node.addDependecy(depStepName)
+        self._stepNames.add(stepName)
         return node, jsonNode["data"]
 
     def _buildTree(self, jsonNode, projectFile):
@@ -115,9 +138,8 @@ class ProjectBuilder:
         if len(jsonNode["Steps"]) == 0:
             Log.error("Empty steps list")
             return None
-        ctx = project.getContext()
         for stepNode in jsonNode["Steps"]:
-            stepNode, stepData = self._createStep(stepNode, ctx)
+            stepNode, stepData = self._createStep(stepNode)
             if stepNode is None or stepData is None:
                 Log.error("Step: {0}".format(stepNode))
                 return None

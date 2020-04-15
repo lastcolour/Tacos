@@ -3,7 +3,7 @@ import os
 import shutil
 import pathlib
 
-from lib.CopyFile import CopyFile
+from lib.steps.CopyFile import CopyFile
 
 import TestUtils
 

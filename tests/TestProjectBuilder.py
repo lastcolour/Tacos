@@ -6,7 +6,7 @@ import unittest
 import TestUtils
 
 from lib.ProjectBuilder import ProjectBuilder
-from lib.Step import Step
+from lib.steps.Step import Step
 from lib.Logger import Log
 
 class TestSerializeData(Step):
@@ -21,6 +21,31 @@ class TestSerializeData(Step):
         TestSerializeData.JSON_NODE = jsonNode
 
     def run(self):
+        return True
+
+class TestReturnFlag(Step):
+    def __init__(self):
+        Step.__init__(self)
+        self._flag = None
+
+    def serialize(self, jsonNode):
+        self._flag = jsonNode["flag"]
+
+    def run(self):
+        return self._flag
+
+class TestRunCount(Step):
+
+    RUN_COUNT = 0
+
+    def __init__(self):
+        Step.__init__(self)
+
+    def serialize(self, jsonNode):
+        pass
+
+    def run(self):
+        TestRunCount.RUN_COUNT = TestRunCount.RUN_COUNT + 1
         return True
 
 class TestProjectBuilder(unittest.TestCase):
@@ -103,3 +128,60 @@ class TestProjectBuilder(unittest.TestCase):
 
         currentDir = pathlib.Path(self._getPathToTempFile()).parent.__str__()
         self.assertEqual(TestSerializeData.JSON_NODE["test_var"], currentDir)
+
+    def test_project_with_dependecy_success(self):
+        projectData = {
+            "Project":"TestProject",
+            "InputVariables":{},
+            "Steps":[
+                {
+                    "name":"Step A",
+                    "type":"TestReturnFlag",
+                    "data": {
+                        "flag":True,
+                    }
+                },
+                {
+                    "name":"Step B",
+                    "dependOn":["Step A"],
+                    "type":"TestRunCount",
+                    "data": {}
+                }
+            ]
+        }
+
+        builder = ProjectBuilder()
+        builder.addStepClass(TestReturnFlag)
+        builder.addStepClass(TestRunCount)
+        project = builder.buildFromData(projectData, None)
+        self.assertTrue(project.run())
+        self.assertEqual(TestRunCount.RUN_COUNT, 1)
+
+    def test_project_with_dependecy_fail(self):
+        projectData = {
+            "Project":"TestProject",
+            "InputVariables":{},
+            "Steps":[
+                {
+                    "name":"Step A",
+                    "type":"TestReturnFlag",
+                    "data": {
+                        "flag":False,
+                    }
+                },
+                {
+                    "name":"Step B",
+                    "dependOn":["Step A"],
+                    "type":"TestRunCount",
+                    "data": {}
+                }
+            ]
+        }
+
+        builder = ProjectBuilder()
+        builder.addStepClass(TestReturnFlag)
+        builder.addStepClass(TestRunCount)
+        project = builder.buildFromData(projectData, None)
+        self.assertTrue(project.run())
+        self.assertEqual(TestRunCount.RUN_COUNT, 0)
+

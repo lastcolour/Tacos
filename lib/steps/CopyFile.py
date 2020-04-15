@@ -1,5 +1,6 @@
 from .Step import Step
-from .Logger import Log
+from lib.Logger import Log
+
 
 import os
 import glob
@@ -11,6 +12,7 @@ def _checkPath(path):
 
 class CopyFile(Step):
     def __init__(self):
+        Step.__init__(self)
         self._target = None
         self._to = None
         self._force = False
@@ -45,6 +47,7 @@ class CopyFile(Step):
 
 class CopyFilesByMask(Step):
     def __init__(self):
+        Step.__init__(self)
         self._target = None
         self._to = None
         self._mask = None

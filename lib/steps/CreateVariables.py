@@ -1,4 +1,5 @@
 from .Step import Step
+from lib.Logger import Log
 
 class CreateVariables(Step):
     def __init__(self):
