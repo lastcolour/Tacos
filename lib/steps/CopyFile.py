@@ -7,9 +7,6 @@ import glob
 import pathlib
 import shutil
 
-def _checkPath(path):
-    return True
-
 class CopyFile(Step):
     def __init__(self):
         Step.__init__(self)
@@ -45,17 +42,91 @@ class CopyFile(Step):
             shutil.copy(self._target, targetPath)
         return True
 
-class CopyFilesByMask(Step):
+class CopyCompiledBinaries(Step):
     def __init__(self):
         Step.__init__(self)
-        self._target = None
+        self._platform = None
         self._to = None
-        self._mask = None
+        self._from = None
+        self._name = None
+        self._type = None
 
     def serialize(self, jsonNode):
-        self._target = jsonNode["target"]
+        self._platform = jsonNode["platform"]
         self._to = jsonNode["to"]
-        self._mask = jsonNode["mask"]
+        self._from = jsonNode["from"]
+        self._name = jsonNode["name"]
+        self._type = jsonNode["type"]
 
     def run(self):
+        if self._platform not in ["Windows", "Linux", "Android"]:
+            Log.error("Unsupported platform: {0}".format(self._platform))
+            return False
+        if self._type not in ["shared", "static"]:
+            Log.error("Unsupported binaries type: {0}".format(self._type))
+            return False
+        if not os.path.exists(self._from):
+            Log.error("Source folder doesn't exist: {0}".format(self._from))
+            return False
+        if len(self._name) == 0:
+            Log.error("Target file name is empty")
+            return False
+        if not os.path.exists(self._to):
+            os.makedirs(self._to)
+        for item in os.listdir(self._from):
+            filePath = "{0}/{1}".format(self._from, item)
+            if not os.path.isdir(filePath) and self._needCopy(item):
+                Log.debug("Copy file : {0}, to folder: {1}".format(filePath, self._to))
+                targetPath = "{0}/{1}".format(self._to, item)
+                shutil.copy(filePath, targetPath)
         return True
+
+    def _checkFileName(self, fileName):
+        if self._platform == "Windows":
+            formatTypes = [
+                "{0}",
+                "{0}32",
+                "{0}d"
+            ]
+        else:
+            formatTypes = [
+                "lib{0}"
+            ]
+        for formatType in formatTypes:
+            if formatType.format(self._name) == fileName:
+                return True
+        return False
+
+    def _checkExtension(self, fileExt):
+        if self._platform == "Windows":
+            if self._type == "static":
+                validExtensions = [
+                    "lib",
+                    "pdb"
+                ]
+            else:
+                validExtensions = [
+                    "dll"
+                ]
+        else:
+            if self._type == "static":
+                validExtensions = [
+                    "a"
+                ]
+            else:
+                validExtensions = [
+                    "so"
+                ]
+        if fileExt in validExtensions:
+            return True
+        return False
+
+    def _needCopy(self, item):
+        tokens = item.split(".")
+        if len(tokens) != 2:
+            return False
+        fileName, fileExt = item.split(".")
+        fileName = fileName.lower()
+        if self._checkExtension(fileExt) and self._checkFileName(fileName):
+            return True
+        return False

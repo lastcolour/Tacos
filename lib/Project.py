@@ -4,6 +4,18 @@ from .Logger import Log
 import pathlib
 import timeit
 
+def _convertDuration(duration):
+    if duration < 0.1:
+        scaledDuration = duration * 100.0
+        scaledDuration = "{0:.1f} ms".format(scaledDuration)
+    elif duration > 100:
+        scaledDurationMin = int(duration // 60)
+        scaledDurationSec = int((duration % 60))
+        scaledDuration = "{0} min {1} s".format(scaledDurationMin, scaledDurationSec)
+    else:
+        scaledDuration = "{0:.2f} s".format(duration)
+    return scaledDuration
+
 class Project:
     def __init__(self, name):
         self._name = name
@@ -18,12 +30,17 @@ class Project:
 
     def run(self):
         Log.info("{0}Start run project: {1}".format(self._getLogOffset(), self._name))
+        startT = timeit.default_timer()
         for idx in range(len(self._nodes)):
             node = self._nodes[idx]
             nodeObj = node[0]
             nodeData = node[1]
             res = self._runNode(nodeObj, nodeData, idx)
             self._nodesRunRes[nodeObj.getName()] = res
+        Log.info("{0}Project Completed. (Duration: {1})".format(
+            self._getLogOffset(),
+            _convertDuration(timeit.default_timer() - startT)
+        ))
         return True
 
     def setProjectFile(self, projectFile):
@@ -63,18 +80,13 @@ class Project:
             type(nodeObj).__name__))
 
     def _printStepEnd(self, nodeRes, nodeDuration):
-        durationScale = "s"
-        if nodeDuration < 0.1:
-            nodeDuration = nodeDuration * 100.0
-            durationScale = "ms"
-        resMsg = "Success."
+        resMsg = "Step Successed."
         if nodeRes is False:
-           resMsg = "Fail!"
-        Log.info("{0}{1} Duration: {2:.2f}{3}".format(
+           resMsg = "Step Failed!"
+        Log.info("{0}{1} (Duration: {2})".format(
             self._getLogOffset(),
             resMsg,
-            nodeDuration,
-            durationScale))
+            _convertDuration(nodeDuration)))
 
     def _printSkipNode(self, nodeObj, nodeIdx, depNodeName):
         Log.info("{0}[{1}/{2}] Skip step: {3} (Impl: {4})".format(

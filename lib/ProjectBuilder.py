@@ -5,8 +5,9 @@ from .steps.CmakeGenerate import CmakeGenerate
 from .steps.CreateVariables import CreateVariables
 from .steps.CreateVariables import SwtichCaseCreateVariable
 from .steps.ImportProject import ImportProject
-from .steps.CopyFile import CopyFile
+from .steps.CopyFile import CopyFile, CopyCompiledBinaries
 from .steps.IfVariable import IfVariableEqual, IfVariableInSet
+from .steps.RunProcess import RunProcess
 
 import json
 import sys
@@ -22,8 +23,10 @@ class ProjectBuilder:
         self.addStepClass(SwtichCaseCreateVariable)
         self.addStepClass(ImportProject)
         self.addStepClass(CopyFile)
+        self.addStepClass(CopyCompiledBinaries)
         self.addStepClass(IfVariableEqual)
         self.addStepClass(IfVariableInSet)
+        self.addStepClass(RunProcess)
 
     def addStepClass(self, stepClass):
         clName = stepClass.__name__

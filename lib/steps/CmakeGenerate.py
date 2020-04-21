@@ -39,8 +39,8 @@ class CmakeGenerate(Step):
             self._arch = node["arch"]
         if "defs" in node:
             self._defs = node["defs"]
-        self._cmake_out_dir = self._fixPath("{0}/_cmake/{1}".format(self._out_dir, self._build_type))
-        self._bin_out_dir = self._fixPath(self._out_dir)
+        self._bin_out_dir = self._fixPath("{0}/{1}".format(self._out_dir, self._build_type))
+        self._cmake_out_dir = "{0}/_cmake".format(self._bin_out_dir)
 
     def run(self):
         if not self._checkBuildType():
@@ -71,17 +71,25 @@ class CmakeGenerate(Step):
         return True
 
     def _buildCmakeRunArgas(self):
+        configStr = self._build_type.upper()
+
         cmakeArgs = [
             'cmake',
             '-S.',
             '-B{0}'.format(self._cmake_out_dir),
             '-DCMAKE_BUILD_TYPE={0}'.format(self._build_type),
             '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
+            '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir),
             '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
-            '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir)
+            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir),
+            '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
+            '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir),
+            '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
+            '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir)
         ]
         if self._generator is None:
             Log.debug("Cmake will use default platform code generator")
+            pass
         else:
             cmakeArgs.append('-G"{0}"'.format(self._generator))
             if self._arch is not None:
