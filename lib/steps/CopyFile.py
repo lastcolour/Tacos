@@ -50,6 +50,7 @@ class CopyCompiledBinaries(Step):
         self._from = None
         self._name = None
         self._type = None
+        self._force = None
 
     def serialize(self, jsonNode):
         self._platform = jsonNode["platform"]
@@ -57,12 +58,13 @@ class CopyCompiledBinaries(Step):
         self._from = jsonNode["from"]
         self._name = jsonNode["name"]
         self._type = jsonNode["type"]
+        self._force = jsonNode["force"]
 
     def run(self):
         if self._platform not in ["Windows", "Linux", "Android"]:
             Log.error("Unsupported platform: {0}".format(self._platform))
             return False
-        if self._type not in ["shared", "static"]:
+        if self._type not in ["shared", "static", "all"]:
             Log.error("Unsupported binaries type: {0}".format(self._type))
             return False
         if not os.path.exists(self._from):
@@ -86,7 +88,8 @@ class CopyCompiledBinaries(Step):
             formatTypes = [
                 "{0}",
                 "{0}32",
-                "{0}d"
+                "{0}d",
+                "{0}dll"
             ]
         else:
             formatTypes = [
@@ -98,25 +101,19 @@ class CopyCompiledBinaries(Step):
         return False
 
     def _checkExtension(self, fileExt):
+        validExtensions = []
         if self._platform == "Windows":
-            if self._type == "static":
-                validExtensions = [
-                    "lib",
-                    "pdb"
-                ]
-            else:
-                validExtensions = [
-                    "dll"
-                ]
+            if self._type == "static" or self._type == "all":
+                validExtensions.append("lib")
+            if self._type == "shared" or self._type == "all":
+                validExtensions.append("dll")
+                validExtensions.append("exp")
+            validExtensions.append("pdb")
         else:
-            if self._type == "static":
-                validExtensions = [
-                    "a"
-                ]
-            else:
-                validExtensions = [
-                    "so"
-                ]
+            if self._type == "static" or self._type == "all":
+                validExtensions.append("a")
+            if self._type == "shared" or self._type == "all":
+                validExtensions.append("so")
         if fileExt in validExtensions:
             return True
         return False
