@@ -8,6 +8,7 @@ from .steps.ImportProject import ImportProject
 from .steps.CopyFile import CopyFile, CopyCompiledBinaries
 from .steps.IfVariable import IfVariableEqual, IfVariableInSet
 from .steps.RunProcess import RunProcess
+from .steps.PyTests import PyTests
 
 import json
 import sys
@@ -27,6 +28,7 @@ class ProjectBuilder:
         self.addStepClass(IfVariableEqual)
         self.addStepClass(IfVariableInSet)
         self.addStepClass(RunProcess)
+        self.addStepClass(PyTests)
 
     def addStepClass(self, stepClass):
         clName = stepClass.__name__

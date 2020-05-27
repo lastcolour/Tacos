@@ -9,6 +9,7 @@ class TestRunProcess(unittest.TestCase):
         data = {
             "cwd":"",
             "process":"win_dir",
+            "createCwd":False,
             "args":[
             ]
         }
@@ -19,6 +20,7 @@ class TestRunProcess(unittest.TestCase):
     def test_run_valid_process(self):
         data = {
             "cwd":"",
+            "createCwd":False,
             "process":"dir",
             "args":[
             ]
