@@ -29,7 +29,7 @@ class Project:
         self._nodes.append( (nodeObj, nodeData) )
 
     def run(self):
-        Log.info("{0}Start run project: {1}".format(self._getLogOffset(), self._name))
+        Log.info("{0}Start run project: '{1}'".format(self._getLogOffset(), self._name))
         startT = timeit.default_timer()
         for idx in range(len(self._nodes)):
             node = self._nodes[idx]
@@ -49,6 +49,9 @@ class Project:
             return
         parentDirPath = pathlib.Path(projectFile).parent.__str__()
         self._ctx.addVariable("currentDir", parentDirPath)
+
+    def setCurrentPlatform(self, currentPlatform):
+        self._ctx.addVariable("currentPlatform", currentPlatform)
 
     def setParent(self, parent):
         self._parent = parent
@@ -72,7 +75,7 @@ class Project:
         return nodeObj.run()
 
     def _printStepStart(self, nodeObj, nodeIdx):
-        Log.info("{0}[{1}/{2}] Run step: {3} (Impl: {4})".format(
+        Log.info("{0}[{1}/{2}] Run step: '{3}' (Impl: '{4}')".format(
             self._getLogOffset(),
             nodeIdx + 1,
             len(self._nodes),
@@ -89,7 +92,7 @@ class Project:
             _convertDuration(nodeDuration)))
 
     def _printSkipNode(self, nodeObj, nodeIdx, depNodeName):
-        Log.info("{0}[{1}/{2}] Skip step: {3} (Impl: {4})".format(
+        Log.info("{0}[{1}/{2}] Skip step: '{3}' (Impl: '{4}')".format(
             self._getLogOffset(),
             nodeIdx + 1,
             len(self._nodes),

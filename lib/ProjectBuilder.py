@@ -7,13 +7,14 @@ from .steps.CreateVariables import SwtichCaseCreateVariable
 from .steps.ImportProject import ImportProject
 from .steps.CopyFile import CopyFile, CopyCompiledBinaries
 from .steps.IfVariable import IfVariableEqual, IfVariableInSet
-from .steps.RunProcess import RunProcess
+from .steps.RunExecutable import RunExecutable
 from .steps.PyTests import PyTests
 
 import json
 import sys
 import os
 from collections import OrderedDict
+import platform
 
 class ProjectBuilder:
     def __init__(self):
@@ -27,7 +28,7 @@ class ProjectBuilder:
         self.addStepClass(CopyCompiledBinaries)
         self.addStepClass(IfVariableEqual)
         self.addStepClass(IfVariableInSet)
-        self.addStepClass(RunProcess)
+        self.addStepClass(RunExecutable)
         self.addStepClass(PyTests)
 
     def addStepClass(self, stepClass):
@@ -93,6 +94,7 @@ class ProjectBuilder:
             return None
         project = Project(projectName)
         project.setProjectFile(projectFile)
+        project.setCurrentPlatform(platform.system())
         if not self._createInputVariables(project, jsonNode):
             return None
         return project

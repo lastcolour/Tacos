@@ -6,6 +6,7 @@ import subprocess
 import io
 import sys
 import shutil
+import platform
 
 class _CmakeVerbosity:
     Silent = 1
@@ -21,6 +22,7 @@ class CmakeGenerate(Step):
         self._out_dir = None
         self._run_dir = None
         self._build_type = None
+        self._build_platform = None
         self._generator = None
         self._arch = None
         self._cmake_out_dir = None
@@ -41,6 +43,7 @@ class CmakeGenerate(Step):
             self._defs = node["defs"]
         self._bin_out_dir = self._fixPath("{0}/{1}".format(self._out_dir, self._build_type))
         self._cmake_out_dir = "{0}/_cmake".format(self._bin_out_dir)
+        self._build_platform = platform.system()
 
     def run(self):
         if not self._checkBuildType():
@@ -98,13 +101,19 @@ class CmakeGenerate(Step):
         cmakeArgs.extend(defs)
         return cmakeArgs
 
+    def _getBuildTarget(self):
+        if self._build_platform == "Windows":
+            return "ALL_BUILD"
+        else:
+            return "all"
+
     def _runCmakeBuild(self):
         runArgs = [
             "cmake",
             "--build",
             ".",
             "--target",
-            "ALL_BUILD",
+            "{0}".format(self._getBuildTarget()),
             "--config",
             self._build_type
         ]
@@ -166,6 +175,9 @@ class CmakeGenerate(Step):
         if self._build_type in self._defs:
             for item in self._defs[self._build_type]:
                 cmakeDefs.append("-D{0}={1}".format(item, self._defs[self._build_type][item]))
+        if self._build_platform in self._defs:
+            for item in self._defs[self._build_platform]:
+                cmakeDefs.append("-D{0}={1}".format(item, self._defs[self._build_platform][item]))
         return cmakeDefs
 
     def _getVerboisty(self, node):

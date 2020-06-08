@@ -1,4 +1,4 @@
-from lib.steps.RunProcess import RunProcess
+from lib.steps.RunExecutable import RunExecutable
 
 import unittest
 
@@ -13,7 +13,7 @@ class TestRunProcess(unittest.TestCase):
             "args":[
             ]
         }
-        runProcess = RunProcess()
+        runProcess = RunExecutable()
         runProcess.serialize(data)
         self.assertFalse(runProcess.run())
 
@@ -25,6 +25,6 @@ class TestRunProcess(unittest.TestCase):
             "args":[
             ]
         }
-        runProcess = RunProcess()
+        runProcess = RunExecutable()
         runProcess.serialize(data)
         self.assertFalse(runProcess.run())
