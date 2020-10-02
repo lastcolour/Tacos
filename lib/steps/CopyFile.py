@@ -1,7 +1,7 @@
 from .Step import Step
 from lib.Logger import Log
 
-
+import pathlib
 import os
 import glob
 import pathlib
@@ -17,6 +17,8 @@ class CopyFile(Step):
     def serialize(self, jsonNode):
         self._target = jsonNode["target"]
         self._to = jsonNode["to"]
+
+        self._to = pathlib.Path(self._to).resolve().__str__()
 
     def run(self):
         if not os.path.exists(self._target):
@@ -59,6 +61,9 @@ class CopyCompiledBinaries(Step):
         self._name = jsonNode["name"]
         self._type = jsonNode["type"]
         self._force = jsonNode["force"]
+
+        self._from = pathlib.Path(self._from).resolve().__str__()
+        self._to = pathlib.Path(self._to).resolve().__str__()
 
     def run(self):
         if self._platform not in ["Windows", "Linux", "Android"]:

@@ -7,6 +7,7 @@ import io
 import sys
 import shutil
 import platform
+import pathlib
 
 class _CmakeVerbosity:
     Silent = 1
@@ -41,8 +42,6 @@ class CmakeGenerate(Step):
             self._arch = node["arch"]
         if "defs" in node:
             self._defs = node["defs"]
-        self._bin_out_dir = self._fixPath("{0}/{1}".format(self._out_dir, self._build_type))
-        self._cmake_out_dir = "{0}/_cmake".format(self._bin_out_dir)
         self._build_platform = platform.system()
 
     def run(self):
@@ -57,12 +56,13 @@ class CmakeGenerate(Step):
         return self._runCmakeBuild()
 
     def _checkRunDir(self):
+        self._run_dir = pathlib.Path(self._run_dir).resolve().__str__()
         if not os.path.exists(self._run_dir):
             Log.error("Can't find run dir: '{0}'".format(self._run_dir))
             return False
         cmakeFile = "{0}/CMakeLists.txt".format(self._run_dir)
         if not os.path.exists(cmakeFile):
-            Log.error("Can't find CMakeLists.txt in '{0}'".format(self._run_dir))
+            Log.error("Can't find 'CMakeLists.txt' in '{0}'".format(self._run_dir))
             return False
         return True
 
@@ -73,7 +73,7 @@ class CmakeGenerate(Step):
             return False
         return True
 
-    def _buildCmakeRunArgas(self):
+    def _buildCmakeRunArgs(self):
         configStr = self._build_type.upper()
 
         cmakeArgs = [
@@ -101,13 +101,7 @@ class CmakeGenerate(Step):
         cmakeArgs.extend(defs)
         return cmakeArgs
 
-    def _getBuildTarget(self):
-        if self._build_platform == "Windows":
-            return "ALL_BUILD"
-        else:
-            return "all"
-
-    def _runCmakeBuild(self):
+    def _buildCompileRunArgs(self):
         runArgs = [
             "cmake",
             "--build",
@@ -117,11 +111,21 @@ class CmakeGenerate(Step):
             "--config",
             self._build_type
         ]
+        return runArgs
+
+    def _getBuildTarget(self):
+        if self._build_platform == "Windows":
+            return "ALL_BUILD"
+        else:
+            return "all"
+
+    def _runCmakeBuild(self):
+        runArgs = self._buildCompileRunArgs()
         logFile = CmakeGenerate._BUILD_LOG_FILE
         return self._runCmake(runArgs, self._cmake_out_dir, logFile)
 
     def _generateCmakeProject(self):
-        runArgs = self._buildCmakeRunArgas()
+        runArgs = self._buildCmakeRunArgs()
         logFile = CmakeGenerate._GENERATE_LOG_FILE
         return self._runCmake(runArgs, self._run_dir, logFile)
 
@@ -139,6 +143,9 @@ class CmakeGenerate(Step):
         return True
 
     def _createOutDir(self):
+        self._out_dir = pathlib.Path(self._out_dir).resolve().__str__()
+        self._bin_out_dir = self._fixPath("{0}/{1}".format(self._out_dir, self._build_type))
+        self._cmake_out_dir = "{0}/_cmake".format(self._bin_out_dir)
         if len(self._out_dir) == 0:
             Log.error("Invalid out dir")
             return False
@@ -158,11 +165,19 @@ class CmakeGenerate(Step):
         else:
             pipeObj = self._createPipe(logFile)
         Log.debug("Start process: {0}".format(" ".join(runArgs)))
-        process = subprocess.Popen(runArgs, cwd=runCwd, stdout=pipeObj, stderr=subprocess.STDOUT)
+        if runCwd is not None:
+            Log.debug("Process cwd: '{0}'".format(runCwd))
+        process = subprocess.Popen(runArgs, cwd=runCwd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        for bLine in process.stdout:
+            utfLine = bLine.decode('utf-8')
+            if self._verbosity == _CmakeVerbosity.All:
+                print(utfLine[:-1])
+            if pipeObj != subprocess.DEVNULL:
+                pipeObj.write(utfLine)
         retCode = process.wait()
         if pipeObj != subprocess.DEVNULL:
-            Log.debug("Process output saved to: {0}".format(logFile))
-            if self._verbosity is not _CmakeVerbosity.Silent or retCode is not 0:
+            Log.debug("Process output saved to: '{0}'".format(logFile))
+            if self._verbosity != _CmakeVerbosity.All and retCode != 0:
                 self._printRunResults(retCode, pipeObj)
             pipeObj.close()
         return retCode is 0

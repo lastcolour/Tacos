@@ -9,6 +9,7 @@ from .steps.CopyFile import CopyFile, CopyCompiledBinaries
 from .steps.IfVariable import IfVariableEqual, IfVariableInSet
 from .steps.RunExecutable import RunExecutable
 from .steps.PyTests import PyTests
+from .steps.AndroidCmakeGenerate import AndroidCmakeGenerate
 
 import json
 import sys
@@ -30,6 +31,7 @@ class ProjectBuilder:
         self.addStepClass(IfVariableInSet)
         self.addStepClass(RunExecutable)
         self.addStepClass(PyTests)
+        self.addStepClass(AndroidCmakeGenerate)
 
     def addStepClass(self, stepClass):
         clName = stepClass.__name__
