@@ -8,7 +8,7 @@ class AndroidCmakeGenerate(CmakeGenerate):
 
     def __init__(self):
         CmakeGenerate.__init__(self)
-        self._abi = ['armeabi-v7a', 'x86']
+        self._abi = ['arm64-v8a', 'armeabi-v7a', 'x86']
         self._build_type = 'Debug'
         self._currentAbi = None
         self._android_sys_version = 21 # Min API Level to support; Read it from manifest file
@@ -32,9 +32,11 @@ class AndroidCmakeGenerate(CmakeGenerate):
             '-GNinja',
             '-DANDROID_ABI={0}'.format(self._currentAbi),
             '-DANDROID_NDK={0}'.format(self._android_ndk),
+            '-DCMAKE_ANDROID_NDK={0}'.format(self._android_ndk),
             '-DCMAKE_TOOLCHAIN_FILE={0}/build/cmake/android.toolchain.cmake'.format(self._android_ndk),
             '-DANDROID_TOOLCHAIN=clang',
             '-DANDROID_STL=c++_static',
+            '-DCMAKE_ANDROID_ARCH_ABI={0}'.format(self._currentAbi),
             '-DANDROID_PLATFORM={0}'.format(self._android_platform),
             '-DCMAKE_BUILD_TYPE={0}'.format(self._build_type),
             '-DCMAKE_SYSTEM_NAME=Android',
@@ -64,5 +66,5 @@ class AndroidCmakeGenerate(CmakeGenerate):
             res = CmakeGenerate.run(self)
             if res != True:
                 Log.error("[AndroidCmakeGenerate:run] Build for ABI '{0}' failed".format(self._currentAbi))
-                break
+            break
         return res
