@@ -112,7 +112,7 @@ class CopyCompiledBinaries(Step):
                 validExtensions.append("lib")
             if self._type == "shared" or self._type == "all":
                 validExtensions.append("dll")
-                validExtensions.append("exp")
+               #  validExtensions.append("exp")
             validExtensions.append("pdb")
         else:
             if self._type == "static" or self._type == "all":

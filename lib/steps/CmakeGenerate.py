@@ -28,10 +28,12 @@ class CmakeGenerate(Step):
         self._arch = None
         self._cmake_out_dir = None
         self._bin_out_dir = None
+        self._separate_bins = None
         self._verbosity = _CmakeVerbosity.All
         self._defs = []
 
     def serialize(self, node):
+        self._separate_bins = node["separate_bins"]
         self._out_dir = node["out_dir"]
         self._run_dir = node["run_dir"]
         self._build_type = node["build_type"]
@@ -74,22 +76,32 @@ class CmakeGenerate(Step):
         return True
 
     def _buildCmakeRunArgs(self):
-        configStr = self._build_type.upper()
-
         cmakeArgs = [
             'cmake',
             '-S.',
             '-B{0}'.format(self._cmake_out_dir),
-            '-DCMAKE_BUILD_TYPE={0}'.format(self._build_type),
-            '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
-            '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir),
-            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
-            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir),
-            '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
-            '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir),
-            '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY={0}'.format(self._bin_out_dir),
-            '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_{0}={1}'.format(configStr, self._bin_out_dir)
+            '-DCMAKE_BUILD_TYPE={0}'.format(self._build_type)
         ]
+
+        if self._separate_bins:
+            cmakeArgs.extend([
+                '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG={0}/Debug'.format(self._bin_out_dir),
+                '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE={0}/Release'.format(self._bin_out_dir),
+                '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO={0}/RelWithDebInfo'.format(self._bin_out_dir),
+
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG={0}/Debug'.format(self._bin_out_dir),
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE={0}/Release'.format(self._bin_out_dir),
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO={0}/RelWithDebInfo'.format(self._bin_out_dir),
+
+                '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG={0}/Debug'.format(self._bin_out_dir),
+                '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE={0}/Release'.format(self._bin_out_dir),
+                '-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO={0}/RelWithDebInfo'.format(self._bin_out_dir),
+
+                '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_DEBUG={0}/Debug'.format(self._bin_out_dir),
+                '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_RELEASE={0}/Release'.format(self._bin_out_dir),
+                '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_RELWITHDEBINFO={0}/RelWithDebInfo'.format(self._bin_out_dir)
+            ])
+
         if self._generator is None:
             Log.debug("Cmake will use default platform code generator")
             pass
@@ -144,7 +156,7 @@ class CmakeGenerate(Step):
 
     def _createOutDir(self):
         self._out_dir = pathlib.Path(self._out_dir).resolve().__str__()
-        self._bin_out_dir = self._fixPath("{0}/{1}".format(self._out_dir, self._build_type))
+        self._bin_out_dir = self._fixPath("{0}".format(self._out_dir))
         self._cmake_out_dir = "{0}/_cmake".format(self._bin_out_dir)
         if len(self._out_dir) == 0:
             Log.error("Invalid out dir")
