@@ -10,6 +10,8 @@ class AndroidCmakeGenerate(CmakeGenerate):
         CmakeGenerate.__init__(self)
         self._abi = ['arm64-v8a', 'armeabi-v7a', 'x86']
         self._currentAbi = None
+        self._android_out_dir = None
+        self._project_out_dir = None
         self._android_sys_version = 21 # Min API Level to support; Read it from manifest file
         self._android_platform = 'android-{0}'.format(self._android_sys_version)
         self._android_sdk = 'C:/Users/Alex-/AppData/Local/Android/Sdk'
@@ -19,7 +21,8 @@ class AndroidCmakeGenerate(CmakeGenerate):
     def serialize(self, node):
         self._separate_bins = node["separate_bins"]
         self._build_type = node['build_type']
-        self._out_dir = node['out_dir']
+        self._android_out_dir = node['android_out_dir']
+        self._project_out_dir = node['project_out_dir']
         self._run_dir = node['run_dir']
         self._verbosity = self._getVerboisty(node)
 
@@ -43,8 +46,14 @@ class AndroidCmakeGenerate(CmakeGenerate):
             '-DCMAKE_MAKE_PROGRAM={0}/ninja.exe'.format(self._cmake_path),
         ]
 
-        defs = self._getDefsForBuildResultOutput()
-        cmakeArgs.extend(defs)
+        if not self._separate_bins:
+            cmakeArgs.extend([
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG={0}/Debug'.format(self._bin_out_dir),
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE={0}/Release'.format(self._bin_out_dir),
+                '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO={0}/RelWithDebInfo'.format(self._bin_out_dir)
+            ])
+        else:
+            cmakeArgs.extend(self._getDefsForBuildResultOutput())
     
         defs = self._getCmakeDefs()
         cmakeArgs.extend(defs)
@@ -61,8 +70,12 @@ class AndroidCmakeGenerate(CmakeGenerate):
         res = True
         for abi in self._abi:
             self._currentAbi = abi
+            self._out_dir = "{0}/{1}/{2}".format(
+                self._android_out_dir,
+                self._currentAbi,
+                self._project_out_dir)
             res = CmakeGenerate.run(self)
             if res != True:
                 Log.error("[AndroidCmakeGenerate:run] Build for ABI '{0}' failed".format(self._currentAbi))
-            break
+                break
         return res
