@@ -75,16 +75,9 @@ class CmakeGenerate(Step):
             return False
         return True
 
-    def _buildCmakeRunArgs(self):
-        cmakeArgs = [
-            'cmake',
-            '-S.',
-            '-B{0}'.format(self._cmake_out_dir),
-            '-DCMAKE_BUILD_TYPE={0}'.format(self._build_type)
-        ]
-
-        if self._separate_bins:
-            cmakeArgs.extend([
+    def _getDefsForBuildResultOutput(self):
+        if self._separate_bins == True:
+            return [
                 '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG={0}/Debug'.format(self._bin_out_dir),
                 '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE={0}/Release'.format(self._bin_out_dir),
                 '-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELWITHDEBINFO={0}/RelWithDebInfo'.format(self._bin_out_dir),
@@ -100,8 +93,17 @@ class CmakeGenerate(Step):
                 '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_DEBUG={0}/Debug'.format(self._bin_out_dir),
                 '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_RELEASE={0}/Release'.format(self._bin_out_dir),
                 '-DCMAKE_COMPILE_PDB_OUTPUT_DIRECTORY_RELWITHDEBINFO={0}/RelWithDebInfo'.format(self._bin_out_dir)
-            ])
+            ]
+        else:
+            return []
 
+    def _buildCmakeRunArgs(self):
+        cmakeArgs = [
+            'cmake',
+            '-S.',
+            '-B{0}'.format(self._cmake_out_dir),
+            '-DCMAKE_BUILD_TYPE={0}'.format(self._build_type)
+        ]
         if self._generator is None:
             Log.debug("Cmake will use default platform code generator")
             pass
@@ -109,8 +111,13 @@ class CmakeGenerate(Step):
             cmakeArgs.append('-G"{0}"'.format(self._generator))
             if self._arch is not None:
                 cmakeArgs.append('-A{0}'.format(self._arch))
+
+        defs = self._getDefsForBuildResultOutput()
+        cmakeArgs.extend(defs)
+    
         defs = self._getCmakeDefs()
         cmakeArgs.extend(defs)
+
         return cmakeArgs
 
     def _buildCompileRunArgs(self):
