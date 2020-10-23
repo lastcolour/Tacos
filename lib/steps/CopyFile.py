@@ -62,6 +62,8 @@ class CopyCompiledBinaries(Step):
         self._type = jsonNode["type"]
         self._force = jsonNode["force"]
 
+        self._name = self._name.lower()
+
         self._from = pathlib.Path(self._from).resolve().__str__()
         self._to = pathlib.Path(self._to).resolve().__str__()
 
@@ -80,12 +82,17 @@ class CopyCompiledBinaries(Step):
             return False
         if not os.path.exists(self._to):
             os.makedirs(self._to)
+        copied = False
         for item in os.listdir(self._from):
             filePath = "{0}/{1}".format(self._from, item)
             if not os.path.isdir(filePath) and self._needCopy(item):
                 Log.debug("Copy file : {0}, to folder: {1}".format(filePath, self._to))
                 targetPath = "{0}/{1}".format(self._to, item)
                 shutil.copy(filePath, targetPath)
+                copied = True
+        if not copied:
+            Log.error("Nothing found to copy from: '{0}'".format(self._from))
+            return False
         return True
 
     def _checkFileName(self, fileName):
@@ -112,7 +119,7 @@ class CopyCompiledBinaries(Step):
                 validExtensions.append("lib")
             if self._type == "shared" or self._type == "all":
                 validExtensions.append("dll")
-               #  validExtensions.append("exp")
+                # validExtensions.append("exp")
             validExtensions.append("pdb")
         else:
             if self._type == "static" or self._type == "all":
