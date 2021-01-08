@@ -128,7 +128,8 @@ class CmakeGenerate(Step):
             "--target",
             "{0}".format(self._getBuildTarget()),
             "--config",
-            self._build_type
+            self._build_type,
+            "--parallel"
         ]
         return runArgs
 
