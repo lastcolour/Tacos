@@ -5,7 +5,7 @@ from .steps.CmakeGenerate import CmakeGenerate
 from .steps.CreateVariables import CreateVariables
 from .steps.CreateVariables import SwtichCaseCreateVariable
 from .steps.ImportProject import ImportProject
-from .steps.CopyFile import CopyFile, CopyCompiledBinaries
+from .steps.CopyFiles import CopyFiles
 from .steps.IfVariable import IfVariableEqual, IfVariableInSet
 from .steps.RunExecutable import RunExecutable
 from .steps.PyTests import PyTests
@@ -25,8 +25,7 @@ class ProjectBuilder:
         self.addStepClass(CreateVariables)
         self.addStepClass(SwtichCaseCreateVariable)
         self.addStepClass(ImportProject)
-        self.addStepClass(CopyFile)
-        self.addStepClass(CopyCompiledBinaries)
+        self.addStepClass(CopyFiles)
         self.addStepClass(IfVariableEqual)
         self.addStepClass(IfVariableInSet)
         self.addStepClass(RunExecutable)
