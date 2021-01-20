@@ -20,6 +20,7 @@ class CopyFiles(Step):
         self._targets = jsonNode["targets"]
         self._to = jsonNode["to"]
         self._from = jsonNode["from"]
+        self._force = jsonNode["force"]
 
         self._to = pathlib.Path(self._to).resolve().__str__()
 
