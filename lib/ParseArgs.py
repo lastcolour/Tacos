@@ -12,7 +12,7 @@ def _removeQuoted(argStr):
     return argStr[1:-1]
 
 def _getCmdArgValue(cmdStr):
-    if len(cmdStr) is 0:
+    if len(cmdStr) == 0:
         return None
     return _removeQuoted(cmdStr)
 
@@ -21,7 +21,7 @@ def _extractrojectNameFromOneItem(argList, startIdx):
     if not item.startswith('--project'):
         return None
     projectName = item[len('--project'):]
-    if len(projectName) is 0:
+    if len(projectName) == 0:
         return None
     if projectName[0] not in [':', '=']:
         return None
@@ -77,10 +77,9 @@ def _printProjectHelp(projectName):
 def ParseArgs():
     _printVersionInfo()
     argList = sys.argv[1:]
-    if len(argList) is 0:
+    if len(argList) == 0:
         _printGeneralHelp()
         sys.exit(1)
-        return None, None
     startIdx = 1
     if _extractHelp(argList, startIdx):
         _printGeneralHelp()
@@ -90,10 +89,8 @@ def ParseArgs():
         _printCantParseArgs()
         _printGeneralHelp()
         sys.exit(1)
-        return None, None
     if _extractHelp(argList, startIdx):
         _printProjectHelp(projectName)
         sys.exit(1)
-        return None, None
     inputVars, startIdx = _extractInputVars(sys.argv, startIdx)
     return projectName, inputVars

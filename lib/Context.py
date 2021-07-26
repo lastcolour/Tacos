@@ -97,7 +97,11 @@ class Context:
         if varName in self._vars:
             Log.info("Override variable: <'{0}': '{1}' -> '{2}'>".format(varName, self._vars[varName], varValue))
             del self._vars[varName]
-        varValue = self.getFormated(varValue, isSoft=False)
+        try:
+            varValue = self.getFormated(varValue, isSoft=False)
+        except Exception as e:
+            Log.error("Can't create variable: '{0}'".format(varName))
+            raise
         if varValue is None:
             raise RuntimeError("Can't add variable {0} with format variable: {1}".format(varName, varValue))
         self._vars[varName] = varValue
