@@ -200,7 +200,7 @@ class CmakeGenerate(Step):
             if self._verbosity != _CmakeVerbosity.All and retCode != 0:
                 self._printRunResults(retCode, pipeObj)
             pipeObj.close()
-        return retCode is 0
+        return retCode == 0
 
     def _getCmakeDefs(self):
         cmakeDefs = []
@@ -236,7 +236,7 @@ class CmakeGenerate(Step):
         pipeObj.tell()
         pipeObj.seek(0)
         printFunc = Log.info
-        if retCode is not 0:
+        if retCode != 0:
             printFunc = Log.warning
         fileContent = pipeObj.read()
         for item in fileContent.split('\n'):
