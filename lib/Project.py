@@ -16,6 +16,12 @@ def _convertDuration(duration):
         scaledDuration = "{0:.2f} s".format(duration)
     return scaledDuration
 
+class _NodeStats:
+    def __init__(self):
+        self._skipped = 0
+        self._successed = 0
+        self._failed = 0
+
 class Project:
     def __init__(self, name):
         self._name = name
@@ -23,6 +29,7 @@ class Project:
         self._nodes = []
         self._parent = None
         self._depth = 0
+        self._nodeStats = _NodeStats()
         self._nodesRunRes = {}
 
     def addNode(self, nodeObj, nodeData):
@@ -37,10 +44,11 @@ class Project:
             nodeData = node[1]
             res = self._runNode(nodeObj, nodeData, idx)
             self._nodesRunRes[nodeObj.getName()] = res
+        Log.info("{0}Successed: {1}, Skipped: {2}, Failed: {3}".format(
+            self._getLogOffset(), self._nodeStats._successed, self._nodeStats._skipped, self._nodeStats._failed))
         Log.info("{0}Project Completed. (Duration: {1})".format(
             self._getLogOffset(),
-            _convertDuration(timeit.default_timer() - startT)
-        ))
+            _convertDuration(timeit.default_timer() - startT)))
         return True
 
     def setProjectFile(self, projectFile):
@@ -114,9 +122,14 @@ class Project:
 
     def _runNode(self, nodeObj, nodeData, nodeIdx):
         if self._trySkipNode(nodeObj, nodeIdx):
+            self._nodeStats._skipped += 1
             return None
         self._printStepStart(nodeObj, nodeIdx)
         startT = timeit.default_timer()
         res = self._runNodeImpl(nodeObj, nodeData)
+        if res:
+            self._nodeStats._successed += 1
+        else:
+            self._nodeStats._failed += 1
         self._printStepEnd(res, timeit.default_timer() - startT)
         return res
