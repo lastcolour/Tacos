@@ -3,9 +3,6 @@ from lib.Logger import Log
 
 import os
 import subprocess
-import io
-import sys
-import shutil
 import platform
 import pathlib
 

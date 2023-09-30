@@ -1,4 +1,5 @@
 from .CmakeGenerate import CmakeGenerate
+from .RunExecutable import GetExecutableExe
 from lib.Logger import Log
 
 import os
@@ -33,7 +34,7 @@ class AndroidCmakeGenerate(CmakeGenerate):
 
     def _buildCmakeRunArgs(self):
         cmakeArgs = [
-            'cmake ',
+            'cmake',
             '-S.',
             '-B{0}'.format(self._cmake_out_dir),
             '-GNinja',
@@ -48,7 +49,7 @@ class AndroidCmakeGenerate(CmakeGenerate):
             '-DCMAKE_BUILD_TYPE={0}'.format(self._build_type),
             '-DCMAKE_SYSTEM_NAME=Android',
             '-DCMAKE_SYSTEM_VERSION={0}'.format(self._android_sys_version),
-            '-DCMAKE_MAKE_PROGRAM={0}/ninja.exe'.format(self._cmake_path),
+            '-DCMAKE_MAKE_PROGRAM={0}/{1}'.format(self._cmake_path, GetExecutableExe('ninja', resolve=False)),
         ]
 
         if not self._separate_bins:
@@ -67,7 +68,7 @@ class AndroidCmakeGenerate(CmakeGenerate):
 
     def _buildCompileRunArgs(self):
         runArgs = [
-            '{0}/ninja.exe'.format(self._cmake_path)
+            '{0}/ninja'.format(self._cmake_path, GetExecutableExe('ninja', resolve=False))
         ]
         return runArgs
 
